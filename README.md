@@ -1,23 +1,33 @@
 # glob-path
+
 Use glob pattern match or replace a string 
 
 # APIs
 
 glob.addRule
+
 glob.addRules
+
 glob.scheme
+
 glob.dest
+
 glob.parse
 
 **Extensitions**
+
 glob.addExt
+
 glob.addExts
 
 # Rules
 
 `****` Full matching
+
 `***` Matching paths and basename and extensition
+
 `**` Matching paths
+
 `*` Matching pathname or basename or extname
 
 # Globs
@@ -31,12 +41,19 @@ Portion of each asterisk segments is parsed into glob array object. except for t
 # Expressions
 
 `{filename}` Replace the value of the filename
+
 `{basename}` Replace the value of the filename and extname
+
 `{extname}` Replace the value of the extension but not contain the dot
+
 `{ext}` Replace the value of the extension and contain the dot
+
 `{...}` Replace the value of all globs
+
 `{index}` Replace the value at this index of all globs
+
 `{globs[0]}` Replace the value of the globs array index
+
 `{globs[1].slice(0,-2)}` Replace the value of the globs expressions
 
 # Path Parse
