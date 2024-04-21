@@ -1,0 +1,27 @@
+{
+  "name": "glob-path",
+  "version": "0.0.1",
+  "description": "EaseScript Is Compiler For Web Development",
+  "main": "index.js",
+  "scripts": {
+    "test": "jasmine ./test/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/51breeze/glob-path.git"
+  },
+  "keywords": [
+    "glob-path",
+    "glob"
+  ],
+  "type": "commonjs",
+  "author": "Jun Ye",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/51breeze/glob-path/issues"
+  },
+  "homepage": "https://github.com/51breeze/glob-path#readme",
+  "devDependencies": {
+    "jasmine": "^3.7.0"
+  }
+}
