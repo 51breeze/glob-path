@@ -238,7 +238,7 @@ class Glob{
             if(group && rule.group && rule.group !== group){
                 continue;
             }
-            if(protocol && rule.protocol!==protocol){
+            if(rule.protocol!==protocol){
                 continue;
             }
             if(rule.type==='function'){
