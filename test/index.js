@@ -62,7 +62,6 @@ describe('ex',()=>{
         glob.addRule('given/**/*.jpg', 'image/{1}/{2}-{basename}')
         glob.addRule('global:///given/abs/***', 'abs/{...}')
         glob.addRule('**/fullpath/***', '{globs[1]}/{basename}')
-
         
         //Matching rule 1
         let res = glob.dest('admin/api/http/Index.es') //output: full/admin/api/http/Index.es
@@ -87,6 +86,7 @@ describe('ex',()=>{
         expect('abs/static', glob.dest('global:///given/abs/static/person.jpg') )
         expect('test/static/person.jpg', glob.dest('D:/given/abs/fullpath/test/static/person.jpg') )
         expect('person.jpg', glob.dest('D:/given/abs/test/static/fullpath/person.jpg') )
+
 
     })
 

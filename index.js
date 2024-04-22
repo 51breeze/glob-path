@@ -1,5 +1,6 @@
 const path = require('path');
-const slashDelimitRegexp = /(?<!\\)[\/]+/;
+const slashSplitterRegexp = /(?<!\\)[\/]+/;
+const dotSplitterRegexp = /(?<!\\)[\.]+/;
 const keyScheme = Symbol('scheme');
 class Glob{
 
@@ -18,18 +19,20 @@ class Glob{
         });
     }
 
-    addRules(rules, group=null, data={}){
+    addRules(rules, group=null, data={}, splitter='slash'){
         Object.keys(rules).forEach(key=>{
-            this.addRule(key,data[key],0,group,data);
+            this.addRule(key,data[key],0,group,data, splitter);
         });
     }
 
-    addRule(pattern, target, priority=0, group=null, data={}){
+    addRule(pattern, target, priority=0, group=null, data={}, splitter='slash'){
         let type = pattern instanceof RegExp ? 'regexp' : typeof pattern;
         let method = typeof target;
         let segments = [];
         let asterisks = 0;
         let protocol = null;
+        let suffix = null;
+        let _splitter = splitter === 'dot' ? dotSplitterRegexp : slashSplitterRegexp;
         if(type ==='string'){
             pattern = pattern.trim();
             let pos = pattern.indexOf(':///')
@@ -37,8 +40,22 @@ class Glob{
                 protocol = pattern.substring(0, pos);
                 pattern = pattern.substring(pos+4);
             }
-            segments =  pattern.replace(/^\/|\/$/).split(slashDelimitRegexp);
+        
+            segments =  pattern.replace(/^\/|\/$/).split( _splitter );
             asterisks = (pattern.match(/(?<!\\)\*/g)||[]).length;
+
+            let last = segments[segments.length-1];
+            let rPos = splitter === 'dot' ? -1 : last.lastIndexOf('.');
+            if(rPos > 0 && last.includes('*')){
+                let lPos = last.indexOf('.');
+                if( lPos !== rPos){
+                    const pattern = last.replace(/\./g,'\\.').replace(/[\*]+/g, ()=>{
+                        return '(.*?)'
+                    });
+                    suffix = new RegExp('^'+pattern+'$');
+                }
+            }
+
             if(pattern.includes('****')){
                 if(segments.length>1){
                     throw new TypeError(`Glob the '****' full match pattern cannot have separator.`)
@@ -66,6 +83,8 @@ class Glob{
         }
         this.#rules.push({
             pattern,
+            suffix,
+            splitter:_splitter,
             target,
             protocol,
             segments,
@@ -132,7 +151,9 @@ class Glob{
         this.#initialized=true;
     }
 
-    matchRule(paths, segments, basename, extname, globs=[]){
+    matchRule(rule, segments, basename, extname, globs=[]){
+        let paths = rule.segments;
+        let suffix = rule.suffix
         let len = paths.length-1;
         let base = paths[len];
         let globPos = -1;
@@ -143,13 +164,19 @@ class Glob{
             return true;
         }
 
-        if(base!=='***'){
-            if(extname && !(base.endsWith(extname) || base.endsWith('.*'))){
-                return false;
-            }else if(basename !== base && !base.startsWith('*')){
-                return false;
-            }else if(base.includes('.') && !extname){
-                return false;
+        if( !(base==='***' || base==='*' || base==='**') ){
+            if(suffix){
+                if(!suffix.test(basename+(extname||''))){
+                    return false
+                }
+            }else{
+                if(extname && !(base.endsWith(extname) || base.endsWith('.*'))){
+                    return false;
+                }else if(basename !== base && !base.startsWith('*')){
+                    return false;
+                }else if(base.includes('.') && !extname){
+                    return false;
+                }
             }
         }
 
@@ -206,7 +233,7 @@ class Glob{
         let group = ctx.group;
         let extname = ctx.extname || this.#extensions[group] || null;
         let delimiter = ctx.delimiter || '/';
-        let key = [normalId,String(group),delimiter,String(extname)].join(':')
+        let key = [ctx.splitter||'slash',normalId,String(group),delimiter,String(extname)].join(':')
         if(!excludes && this.#cache.hasOwnProperty(key)){
             return this.#cache[key];
         }
@@ -218,7 +245,8 @@ class Glob{
             normalId = normalId.substring(pos+4);
         }
 
-        let segments = normalId.split(slashDelimitRegexp);
+        let splitter = ctx.splitter === 'dot' ? dotSplitterRegexp : slashSplitterRegexp;
+        let segments = normalId.split(splitter);
         let basename = segments[segments.length-1];
         let dotAt = basename.lastIndexOf('.');
         let result = null;
@@ -241,6 +269,9 @@ class Glob{
             if(rule.protocol!==protocol){
                 continue;
             }
+            if(rule.splitter !== splitter){
+                continue;
+            }
             if(rule.type==='function'){
                 if(rule.pattern(id, ctx, rule)){
                     result = rule;
@@ -254,7 +285,7 @@ class Glob{
             }else if(rule.pattern===id || rule.pattern===normalId){
                 result = rule;
                 break;
-            }else if(this.matchRule(rule.segments, segments, basename, extname, globs)){
+            }else if(this.matchRule(rule, segments, basename, extname, globs)){
                 result = rule;
                 break;
             }
