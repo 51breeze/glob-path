@@ -1,4 +1,4 @@
-const path = require('path')
+const path = require('path');
 const slashDelimitRegexp = /(?<!\\)[\/]+/;
 const keyScheme = Symbol('scheme');
 class Glob{
@@ -29,8 +29,14 @@ class Glob{
         let method = typeof target;
         let segments = [];
         let asterisks = 0;
+        let protocol = null;
         if(type ==='string'){
             pattern = pattern.trim();
+            let pos = pattern.indexOf(':///')
+            if(pos>0){
+                protocol = pattern.substring(0, pos);
+                pattern = pattern.substring(pos+4);
+            }
             segments =  pattern.replace(/^\/|\/$/).split(slashDelimitRegexp);
             asterisks = (pattern.match(/(?<!\\)\*/g)||[]).length;
             if(pattern.includes('****')){
@@ -61,6 +67,7 @@ class Glob{
         this.#rules.push({
             pattern,
             target,
+            protocol,
             segments,
             asterisks,
             priority,
@@ -203,6 +210,14 @@ class Glob{
         if(!excludes && this.#cache.hasOwnProperty(key)){
             return this.#cache[key];
         }
+
+        let pos = normalId.indexOf(':///')
+        let protocol = null;
+        if(pos>0){
+            protocol = normalId.substring(0, pos);
+            normalId = normalId.substring(pos+4);
+        }
+
         let segments = normalId.split(slashDelimitRegexp);
         let basename = segments[segments.length-1];
         let dotAt = basename.lastIndexOf('.');
@@ -221,6 +236,9 @@ class Glob{
                 if(Array.isArray(excludes) && excludes.includes(rule))continue;
             }
             if(group && rule.group && rule.group !== group){
+                continue;
+            }
+            if(protocol && rule.protocol!==protocol){
                 continue;
             }
             if(rule.type==='function'){
@@ -249,6 +267,7 @@ class Glob{
             extname,
             args,
             globs,
+            protocol,
             id,
             normalId,
             rule:result,
