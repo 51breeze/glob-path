@@ -325,6 +325,11 @@ class Glob{
         }
 
         const args = result ? globs.flat() : [];
+        const old = this.#cache[key];
+        if(!result && old){
+            return old;
+        }
+
         return this.#cache[key] = {
             segments,
             basename,
@@ -357,15 +362,22 @@ class Glob{
         }
         if(rule.method){
             let _result = rule.target(id, scheme, ctx, this);
-            let _scheme = scheme;
-            let _excludes = [rule];
-            while(_result === void 0){
-                _scheme = this.scheme(_scheme.id, ctx, _excludes)
-                if(_scheme && _scheme.rule){
-                    _excludes.push(_scheme.rule);
-                    _result = this.parse(_scheme, ctx)
-                }else{
-                    break;
+            if(_result === void 0){
+                let _scheme = scheme;
+                let _excludes = [rule];
+                let _records = new WeakSet([_scheme]);
+                while(_result === void 0){
+                    _scheme = this.scheme(_scheme.id, ctx, _excludes);
+                    if(_records.has(_scheme)){
+                        break;
+                    }
+                    _records.add(_scheme);
+                    if(_scheme && _scheme.rule){
+                        _excludes.push(_scheme.rule);
+                        _result = this.parse(_scheme, ctx)
+                    }else{
+                        break;
+                    }
                 }
             }
             return scheme.value = _result;
