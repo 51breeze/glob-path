@@ -41,6 +41,7 @@ describe('Glob', function() {
         expect('route2').toEqual( globInstance.dest('element-ui/packages/from.route2') )
         expect('configphp').toEqual( globInstance.dest('element-ui/packages/config.php') )
         expect('src-*-php').toEqual( globInstance.dest('element-ui/packages/src/config.php') )
+        expect('configphp').toEqual( globInstance.dest('element-ui/packages/src/test/config.php') )
 
     })
 

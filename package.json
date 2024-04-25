@@ -1,6 +1,6 @@
 {
   "name": "glob-path",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "EaseScript Is Compiler For Web Development",
   "main": "index.js",
   "scripts": {
