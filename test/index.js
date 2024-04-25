@@ -6,19 +6,21 @@ describe('Glob', function() {
     });
 
     it('test', function() {
-        globInstance.addRule('****', 'test/{...}/{basename}')
-        globInstance.addRule('**/*.json', 'json/{...}/{basename}')
-        globInstance.addRule('test/**/*.es', 'test/{...}/../{basename}')
-        globInstance.addRule('test/**/*.*', 'test/{...}/../all/{basename}')
-        globInstance.addRule('test/dir/**/*.*', 'test/{0}/{1}-{2}/{basename}')
-        globInstance.addRule('**/api/model/**/*.*', 'test/build/server/model/{...globs[0]}/{globs[1][1]}/{basename}')
-        globInstance.addRule('**/apis/*/model/**/*.*', 'test/apis/server/model/{...globs[0]}/{globs[1]}/{globs[2]}/{basename}')
-        globInstance.addRule('**/apis/*/*/*.js', 'test/js/{globs[1]}-{globs[2]}{basename}')
+        globInstance.addRule('****', 'test/{...}/{filename}')
+        globInstance.addRule('*.route', 'route')
+        globInstance.addRule('*.route2', '{`extreal.substring(1)`}')
+        globInstance.addRule('**/*.json', 'json/{...}/{filename}')
+        globInstance.addRule('test/**/*.es', 'test/{...}/../{filename}')
+        globInstance.addRule('test/**/*.*', 'test/{...}/../all/{filename}')
+        globInstance.addRule('test/dir/**/*.*', 'test/{0}/{1}-{2}/{filename}')
+        globInstance.addRule('**/api/model/**/*.*', 'test/build/server/model/{...globs[0]}/{globs[1][1]}/{filename}')
+        globInstance.addRule('**/apis/*/model/**/*.*', 'test/apis/server/model/{...globs[0]}/{globs[1]}/{globs[2]}/{filename}')
+        globInstance.addRule('**/apis/*/*/*.js', 'test/js/{globs[1]}-{globs[2]}{filename}')
         globInstance.addRule('com/**/test', 'com/{...}/test/ok')
         globInstance.addRule('com/*/test/api/*', 'com/{...}/test/api/{1}')
-        globInstance.addRule('com/*/test/api/**', 'coms/{0}/test/api/{globs[1]}/{filename}')
-        globInstance.addRule('com/**/apis/**', 'comss/{-2}/{0}/test/api/{globs[1]}/{filename}')
-        globInstance.addRule('element-ui/packages/***', 'element-plus/es/components/{...}/{filename}')
+        globInstance.addRule('com/*/test/api/**', 'coms/{0}/test/api/{globs[1]}/{basename}')
+        globInstance.addRule('com/**/apis/**', 'comss/{-2}/{0}/test/api/{globs[1]}/{basename}')
+        globInstance.addRule('element-ui/packages/***', 'element-plus/es/components/{...}/{basename}')
 
         expect('test/src/api/http/Index.es').toEqual( globInstance.dest('src/api/http/Index.es') )
         expect('test/src/api/Index.es').toEqual( globInstance.dest('test/src/api/http/Index.es') )
@@ -33,6 +35,8 @@ describe('Glob', function() {
         expect('coms.http.test.api.dev.cc.name').toEqual( globInstance.dest('com/http/test/api/dev/cc/name', {delimiter:'.'}) )
         expect('comss.dev.http.test.api.dev.cc.name').toEqual( globInstance.dest('com/http/test/apis/dev/cc/name', {delimiter:'.'}) )
         expect('element-plus/es/components/from').toEqual( globInstance.dest('element-ui/packages/from') )
+        expect('route').toEqual( globInstance.dest('element-ui/packages/from.route') )
+        expect('route2').toEqual( globInstance.dest('element-ui/packages/from.route2') )
 
     })
 
@@ -48,9 +52,9 @@ describe('ex',()=>{
 
     it('test', function() {
 
-        glob.addRule('****', 'full/{...}/{basename}')
-        glob.addRule('**/*.json', 'json/{...}/{basename}')
-        glob.addRule('src/**/*.es', 'test/{...}/../{basename}')
+        glob.addRule('****', 'full/{...}/{filename}')
+        glob.addRule('**/*.json', 'json/{...}/{filename}')
+        glob.addRule('src/**/*.es', 'test/{...}/../{filename}')
         glob.addRule('given/***', (id)=>{
             if(id.endsWith('.png')){
                 return 'proxy/'+id
@@ -58,11 +62,11 @@ describe('ex',()=>{
             //If does not return, next rule of matched to processed
         })
         
-        glob.addRule('given/**/*.jpg', 'image/{1}/{2}-{basename}')
+        glob.addRule('given/**/*.jpg', 'image/{1}/{2}-{filename}')
         glob.addRule('global:///given/abs/***', 'abs/{...}')
-        glob.addRule('**/fullpath/***', '{globs[1]}/{basename}')
+        glob.addRule('**/fullpath/***', '{globs[1]}/{filename}')
 
-        glob.addRule('fullpath/***', '{...}/{basename}', 0, 'image')
+        glob.addRule('fullpath/***', '{...}/{filename}', 0, 'image')
        
         
         //Matching rule 1

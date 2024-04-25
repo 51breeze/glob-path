@@ -36,6 +36,7 @@ class Glob{
         let protocol = null;
         let suffix = null;
         let prefix = false;
+        let full = false;
         if(type ==='string'){
             pattern = pattern.trim();
             let pos = pattern.indexOf(':///')
@@ -68,11 +69,13 @@ class Glob{
                 if(segments.length>1){
                     throw new TypeError(`Glob the '****' full match pattern cannot have separator.`)
                 }
+                full = true;
             }else if(pattern.includes('***')){
                const at = pattern.indexOf('***');
                if(at<pattern.length-3){
                     throw new TypeError(`Glob the '***' full match pattern should is at the pattern ends.`)
                }
+               full = true;
             }else if(/\*\*\.\w+$/.test(pattern)){
                 throw new TypeError(`Glob the '**.ext' file match pattern should have a separator between the two asterisks. as the '*/*.ext'`)
             }else if(/\*{4,}/.test(pattern)){
@@ -100,6 +103,7 @@ class Glob{
             priority,
             group,
             type,
+            full,
             method,
             data,
             setValue(prefix, name, value){
@@ -147,9 +151,14 @@ class Glob{
 
             if(a.asterisks===0)return -1;
             if(b.asterisks===0)return 1;
-
+            
+           
             let a1 = a.segments.length;
             let b1 = b.segments.length;
+            if(a.full && !b.full){
+                return 1;
+            }
+
             if(a1>b1)return -1;
             if(a1<b1)return 1;
             let a2 = a.asterisks;
@@ -258,6 +267,7 @@ class Glob{
 
         let normalId = id.replace(/\\/g,'/').replace(/^\/|\/$/g,'');
         let extname = ctx.extname || group && this.#extensions[group] || null;
+        let extreal = '';
         let delimiter = ctx.delimiter || '/';
         let key = [normalId,String(group),delimiter,String(extname)].join(':')
         if(!excludes && this.#cache.hasOwnProperty(key)){
@@ -270,15 +280,16 @@ class Glob{
             protocol = normalId.substring(0, pos);
             normalId = normalId.substring(pos+4);
         }
-        
+
         let segments = normalId.split(slashSplitterRegexp);
         let basename = segments[segments.length-1];
         let dotAt = basename.lastIndexOf('.');
         let result = null;
         let globs = [];
         if(dotAt>=0){
+            extreal = basename.slice(dotAt);
             if(!extname){
-                extname = basename.slice(dotAt);
+                extname = extreal;
             }
             basename = basename.substring(0, dotAt);
         }
@@ -318,6 +329,7 @@ class Glob{
             segments,
             basename,
             extname,
+            extreal,
             args,
             globs,
             protocol,
@@ -336,7 +348,7 @@ class Glob{
     parse(scheme, ctx={}){
         const defaultValue = ctx.failValue !== void 0 ? ctx.failValue : false;
         if(!scheme || !scheme.rule || scheme[keyScheme]!==true)return defaultValue;
-        const {basename,extname,rule,args,value, id} = scheme;
+        const {basename,extname,rule,args,value, id, extreal} = scheme;
         if(!rule.target){
             return rule.target;
         }
@@ -367,22 +379,29 @@ class Glob{
                     return args.join('/')
                 }
             }
-            if(name.startsWith('globs')){
+            const isExpr = name.charCodeAt(0)===96 && name.charCodeAt(name.length-1)===96;
+            if(isExpr){
+                name = name.slice(1,-1);
+            }
+            if(isExpr || name.startsWith('globs')){
                 try{
                     let _globs = eval(`(${name.replace(/\bglobs\b/g,'scheme.globs')})`);
                     _globs = Array.isArray(_globs) ? _globs.flat() : [_globs];
                     return _globs.join('/')
                 }catch(e){
-                    throw new ReferenceError(`${name} expression invalid`)
+                    console.log(e)
+                    throw new ReferenceError(`\`${name}\` expression invalid`)
                 }
             }else if(name==='basename'){
-                return `${basename}${extname||''}`;
-            }else if(name==='filename'){
                 return basename;
+            }else if(name==='filename'){
+                return `${basename}${extname||''}`;
             }else if(name==='extname'){
                 return (extname||'').substring(1);
             }else if(name==='ext'){
                 return extname||'';
+            }else if(name==='extreal'){
+                return extreal||'';
             }else if(/-?\d+/.test(name)){
                 if(name[0]==='-'){
                     name = args.length - Number(name.substring(1));
