@@ -352,7 +352,7 @@ class Glob{
         if(!rule.target){
             return rule.target;
         }
-        if(value){
+        if(value && scheme.cache !== false){
             return value;
         }
         if(rule.method){
