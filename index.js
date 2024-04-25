@@ -148,11 +148,8 @@ class Glob{
 
             if(a.type==='regexp' || a.type==='function')return -1;
             if(b.type==='regexp' || b.type==='function')return 1;
+            if(a.prefix && a.asterisks===0)return -1;
 
-            if(a.asterisks===0)return -1;
-            if(b.asterisks===0)return 1;
-            
-           
             let a1 = a.segments.length;
             let b1 = b.segments.length;
             if(a.full && !b.full){
