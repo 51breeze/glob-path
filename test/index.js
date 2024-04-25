@@ -9,6 +9,7 @@ describe('Glob', function() {
         globInstance.addRule('****', 'test/{...}/{filename}')
         globInstance.addRule('*.route', 'route')
         globInstance.addRule('*.route2', '{`extreal.substring(1)`}')
+        globInstance.addRule('config.php', 'configphp')
         globInstance.addRule('**/*.json', 'json/{...}/{filename}')
         globInstance.addRule('test/**/*.es', 'test/{...}/../{filename}')
         globInstance.addRule('test/**/*.*', 'test/{...}/../all/{filename}')
@@ -37,6 +38,7 @@ describe('Glob', function() {
         expect('element-plus/es/components/from').toEqual( globInstance.dest('element-ui/packages/from') )
         expect('route').toEqual( globInstance.dest('element-ui/packages/from.route') )
         expect('route2').toEqual( globInstance.dest('element-ui/packages/from.route2') )
+        expect('configphp').toEqual( globInstance.dest('element-ui/packages/config.php') )
 
     })
 

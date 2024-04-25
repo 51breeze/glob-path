@@ -190,7 +190,7 @@ class Glob{
             }
         }
 
-        if( base!=='***' ){
+        if( base!=='***' && segments[segments.length-1] !== base ){
             if(suffix){
                 if(!suffix.test(basename+(extname||''))){
                     return false
@@ -205,7 +205,7 @@ class Glob{
                 }
             }
         }
-
+        
         const push=(end)=>{
             if(globPos>=0){
                 globs.push(segments.slice(globPos,end));
