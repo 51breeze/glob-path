@@ -14,7 +14,7 @@ class Glob{
 
     addExts(data={}){
         Object.keys(data).forEach(key=>{
-            this.#extensions[key] = data[key];
+            this.addExt(key, data[key]);
         });
     }
 
@@ -35,12 +35,18 @@ class Glob{
         let asterisks = 0;
         let protocol = null;
         let suffix = null;
+        let prefix = false;
         if(type ==='string'){
             pattern = pattern.trim();
             let pos = pattern.indexOf(':///')
             if(pos>0){
                 protocol = pattern.substring(0, pos);
                 pattern = pattern.substring(pos+4);
+            }
+
+            if(pattern.charCodeAt(0) === 94){
+                prefix = true;
+                pattern = pattern.substring(1)
             }
         
             segments =  pattern.replace(/^\/|\/$/).split( slashSplitterRegexp );
@@ -86,6 +92,7 @@ class Glob{
         this.#rules.push({
             pattern,
             suffix,
+            prefix,
             target,
             protocol,
             segments,
@@ -165,6 +172,15 @@ class Glob{
             return true;
         }
 
+        if(!rule.prefix && !paths[0].startsWith('*') && segments[0] !== paths[0]){
+            const matchAt = segments.indexOf( paths[0] );
+            if(matchAt<0){
+                return false;
+            }else{
+                segments = segments.slice(matchAt);
+            }
+        }
+
         if( base!=='***' ){
             if(suffix){
                 if(!suffix.test(basename+(extname||''))){
@@ -230,9 +246,18 @@ class Glob{
         if(!this.#initialized){
             this.#init();
         }
-        let normalId = String(id).trim().replace(/\\/g,'/').replace(/^\/|\/$/);
-        let group = ctx.group;
-        let extname = ctx.extname || this.#extensions[group] || null;
+
+        id = String(id).trim();
+
+        let group = ctx.group || null;
+        let gPos = id.lastIndexOf('::');
+        if(gPos>0){
+            group = id.substring(gPos+2);
+            id = id.substring(0, gPos);
+        }
+
+        let normalId = id.replace(/\\/g,'/').replace(/^\/|\/$/g,'');
+        let extname = ctx.extname || group && this.#extensions[group] || null;
         let delimiter = ctx.delimiter || '/';
         let key = [normalId,String(group),delimiter,String(extname)].join(':')
         if(!excludes && this.#cache.hasOwnProperty(key)){
@@ -245,7 +270,7 @@ class Glob{
             protocol = normalId.substring(0, pos);
             normalId = normalId.substring(pos+4);
         }
-
+        
         let segments = normalId.split(slashSplitterRegexp);
         let basename = segments[segments.length-1];
         let dotAt = basename.lastIndexOf('.');
@@ -263,7 +288,7 @@ class Glob{
                 if(excludes===rule)continue;
                 if(Array.isArray(excludes) && excludes.includes(rule))continue;
             }
-            if(group && rule.group && rule.group !== group){
+            if(rule.group !== group){
                 continue;
             }
             if(rule.protocol!==protocol){

@@ -51,7 +51,6 @@ describe('ex',()=>{
         glob.addRule('****', 'full/{...}/{basename}')
         glob.addRule('**/*.json', 'json/{...}/{basename}')
         glob.addRule('src/**/*.es', 'test/{...}/../{basename}')
-        glob.addRule('src/**/*.es', 'test/{...}/../{basename}')
         glob.addRule('given/***', (id)=>{
             if(id.endsWith('.png')){
                 return 'proxy/'+id
@@ -62,30 +61,38 @@ describe('ex',()=>{
         glob.addRule('given/**/*.jpg', 'image/{1}/{2}-{basename}')
         glob.addRule('global:///given/abs/***', 'abs/{...}')
         glob.addRule('**/fullpath/***', '{globs[1]}/{basename}')
+
+        glob.addRule('fullpath/***', '{...}/{basename}', 0, 'image')
+       
         
         //Matching rule 1
         let res = glob.dest('admin/api/http/Index.es') //output: full/admin/api/http/Index.es
-        expect('full/admin/api/http/Index.es', res)
+        expect('full/admin/api/http/Index.es').toEqual( res)
         
         //Matching rule 3
         res = glob.dest('src/api/http/Index.es') //output: test/src/api/Index.es
-        expect('test/src/api/Index.es', res)
+        expect('test/api/Index.es').toEqual( res)
         
         //Matching rule 2
         res = glob.dest('test/karma/config.json') //output: json/test/karma/config.json
-        expect('json/test/karma/config.json', res)
+        expect('json/test/karma/config.json').toEqual( res)
         
         //Matching rule 4
         res = glob.dest('given/abs/profile/static/person.png') //output: proxy/given/abs/profile/static/person.png
-        expect('proxy/given/abs/profile/static/person.png', res)
+        expect('proxy/given/abs/profile/static/person.png').toEqual( res)
         
         //Matching rule 5
         res = glob.dest('given/abs/profile/static/person.jpg') //output: image/profile/static-person.jpg
-        expect('image/profile/static-person.jpg', res)
+        expect('image/profile/static-person.jpg').toEqual( res)
 
-        expect('abs/static', glob.dest('global:///given/abs/static/person.jpg') )
-        expect('test/static/person.jpg', glob.dest('D:/given/abs/fullpath/test/static/person.jpg') )
-        expect('person.jpg', glob.dest('D:/given/abs/test/static/fullpath/person.jpg') )
+        expect('abs/static').toEqual( glob.dest('global:///given/abs/static/person.jpg') )
+        expect('image/fullpath/test-person.jpg').toEqual( glob.dest('D:/given/abs/fullpath/test/static/person.jpg') )
+        expect('image/test/static-person.jpg').toEqual( glob.dest('D:/given/abs/test/static/fullpath/person.jpg') )
+
+        expect('iii/person.jpg').toEqual(glob.dest('D:/given/abs/test/static/fullpath/iii/person.jpg::image') )
+
+        expect('images/person.jpg').toEqual( glob.dest('D:/given/abs/test/static/fullpath/images/person.jpg::image')  )
+
 
 
     })
